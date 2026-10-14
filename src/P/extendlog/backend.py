@@ -6,6 +6,7 @@
 #extendlog, a Python module providing customized, high-level logging functions.
 
 #imports
+import                              sys
 import                              time
 import                              collections
 import                              queue
@@ -355,6 +356,7 @@ class threading:
                     #if everything alright
                     if linesum:
                         if(linesum.endswith("\r\n")): linesum=linesum[:-2]
+                        sys.stdout.write(linesum+"\r\n")
                         for i in range(linecount): self.queue_stdout.task_done()
                 except Exception as e:
                     backend.exception_handle(self,"logging.write_stdout_thread()",e,f"shutting down tasks now...",to_std=True)
