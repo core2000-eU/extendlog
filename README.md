@@ -143,7 +143,7 @@ logging.exit(wait=True)
 - watch closely, there's nothing here  
 
 **ToDo**:  
-- [Issue #TODO:](https://github.com/core2000-eU/TODO) Logging to syslog server needs implementation. ( the "to_514" parameters in log() )  
+- [Issue #1:](https://github.com/core2000-eU/extendlog/issues/1) Logging to syslog server needs implementation. ( the "to_514" parameters in log() )  
   Timeframe: Q2/2027. For now, stdout and logfile are the only options.  
 
 ### Source file structure (for contributors and developers):  
