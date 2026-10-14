@@ -103,7 +103,7 @@ logging.log(caller="my_func_2", status="INFO", texttolog="log test no. 2", logid
 ```
 
 > [!NOTE]
-> RUNNINGLOG
+> RUNNINGLOG  
 > The runninglog feature is a highly capable feature, especially for time-senstitive and multi-thread applications. It is described in detail in the example file [`/samples/extendlog_sample1.py`](https://github.com/core2000-eU/extendlog/blob/main/samples/extendlog_sample1.py) on GitHub.
 
 **log entries to runninglog; process/output the runninglog afterwards**:  
@@ -130,7 +130,7 @@ logging.logfile_rotate("logfile_2.log")
 ```
 
 > [!NOTE]
-> EXCEPTION HANDLING
+> EXCEPTION HANDLING  
 > Is described in detail in the example file [`/samples/extendlog_sample1.py`](https://github.com/core2000-eU/extendlog/blob/main/samples/extendlog_sample1.py) on GitHub.
 
 **You must exit/shutdown every instance of extendlog like this**:  
@@ -140,37 +140,7 @@ logging.exit(wait=True)
 
 ### Quirks, features, ToDo
 **Quirks and features**:  
-- **This** library handles XML comments as "default" XML elements in *xml_struct*, meaning that all comments are also of type *templates.xml_struct.element(\*)*, but with their *is_comment* export set *TRUE*.  
-- **CDATA** is not supported (future release).  
-- **namespaces** are not supported (future release).
-- **special characters** &, <, >, ", ':  
-  - NOT ALLOWED in names (element names, attribute names).  
-  - ALLOWED in values ESCAPED-ONLY (element values, attribute values):  
-    - escape with:  
-      - \& ... &amp  
-      - \" ... &quot  
-      - \' ... &quot  
-      - \< ... &lt  
-      - \> ... &gt  
-    - the standard specifies that some special chars may be allowed even in values, **this will never be implemented**.  
-    - on read() and write(), ALL [\"] are replaced with [\&quot].  
-- **Mixed content** is not allowed and will probably never be implemented:  
-  - not allowed:  
-    \<a> CAT \<b>AND_MOUSE\</b> AND_DOG \</a>  
-- **comment within XML element value** are not supported, and will probably never be implemented.  
-- **old-school schema** mechanism not supported, only XSD.  
-- **multi-line strings**:  
-  - for function **read()**:  
-    - **multi-line comments** are supported  
-    - **multi-line element values** are supported but newline characters get discarded from output - you won't see them  
-    - **multi-line attribute values** are supported  
-    - **newline character** is '\\n' on output *xml_struct*  
-  - for function **write()**:  
-    - **newline character** is '\\n'  
-    - **multi-line comments** are supported  
-    - **multi-line element values** are supported but newline characters get discarded from output  
-    - **multi-line attribute values** are supported  
-- **nested comments** are not supported.  
+- watch closely, there's nothing here  
 
 **ToDo**:  
 - [Issue #TODO:](https://github.com/core2000-eU/TODO) Logging to syslog server needs implementation. ( the "to_514" parameters in log() )  
