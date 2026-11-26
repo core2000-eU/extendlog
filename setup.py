@@ -13,7 +13,7 @@ long_description = (parent_dir / "README.md").read_text(encoding="utf-8")
 
 setuptools.setup (
     name =                              "extendlog", 
-    version =                           "0.0.1",
+    version =                           "0.0.3",
     author =                            "Benjamin Winter",
     license=                            "MIT",
     description =                       "extendlog, a Python module providing customized, high-level logging functions.",
