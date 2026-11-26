@@ -74,8 +74,9 @@ class backend:
         try:
             for i in range(self.queue_logfile.qsize()*2): self.queue_logfile.task_done()
             if(is_exc): print(f"extendlog: logging.backend.shutdown_writeLogfileThread(): shutdown of tasks done")
-        except:
-            pass
+        except: pass
+        self.queue_logfile.shutdown()
+        if(is_exc): print(f"extendlog: logging.backend.shutdown_writeLogfileThread(): call to queue_logfile.shutdown done")
     def shutdown_writeStdoutThread(self,is_exc):
         """
         brief internal function to properly handle emergency shutdown of write_stdout_thread()
@@ -87,8 +88,9 @@ class backend:
         try:
             for i in range(self.queue_stdout.qsize()*2): self.queue_stdout.task_done()
             if(is_exc): print(f"extendlog: logging.backend.shutdown_writeStdoutThread(): shutdown of tasks done")
-        except:
-            pass
+        except: pass
+        self.queue_stdout.shutdown()
+        if(is_exc): print(f"extendlog: logging.backend.shutdown_writeStdoutThread(): call to queue_stdout.shutdown() done")
     def debug_handle(self,str_in,level=7):
         """
         brief internal function to handle debug messages
@@ -103,22 +105,22 @@ class backend:
         except: pass #ignore
         #file, 514
         try:
-            if(self.debug):     self.log("extendlog", "DEBUG", f"debugging message: {str_in}",level=level,nonewlines=True,to_std=False,to_file=True,to_514=True)
+            if(self.debug):     self.log(texttolog=f"debugging message: {str_in}",caller="extendlog",status="DEBUG",level=level,nonewlines=True,to_std=False,to_file=True,to_514=True)
         except: pass
-    def checkparam_log(self,caller,logid,serial,level,status,texttolog,nonewlines,timenow,to_std,to_file,to_514):
+    def checkparam_log(self,texttolog,caller,logid,serial,level,status,nonewlines,timenow,to_std,to_file,to_514):
         """
         brief internal function check parameters on function call
         param [**] self-describing
         returns [] None
         """
         temp_str_prepend=f"extendlog: logging.log(): "
-        temp_str_debug=f" (for debugging: function called with parameters: log({backend.reconstr_func_param(caller=caller,logid=logid,serial=serial,level=level,status=status,texttolog=texttolog,nonewlines=nonewlines,timenow=timenow,to_std=to_std,to_file=to_file,to_514=to_514)})"
+        temp_str_debug=f" (for debugging: function called with parameters: log({backend.reconstr_func_param(texttolog=texttolog,caller=caller,logid=logid,serial=serial,level=level,status=status,nonewlines=nonewlines,timenow=timenow,to_std=to_std,to_file=to_file,to_514=to_514)})"
+        if( not isinstance(texttolog, str) ):       raise ValueError(f"{temp_str_prepend}param [texttolog] expected to be type STR but is type {type(texttolog).__name__.upper()}{temp_str_debug}")
         if( not isinstance(caller, str) ):          raise ValueError(f"{temp_str_prepend}param [caller] expected to be type STR but is type {type(caller).__name__.upper()}{temp_str_debug}")
         if( not isinstance(logid, int) ):           raise ValueError(f"{temp_str_prepend}param [logid] expected to be type INT but is type {type(logid).__name__.upper()}{temp_str_debug}")
         if( not isinstance(serial, int) ):          raise ValueError(f"{temp_str_prepend}param [serial] expected to be type INT but is type {type(serial).__name__.upper()}{temp_str_debug}")
         if( not isinstance(level, int) ):           raise ValueError(f"{temp_str_prepend}param [level] expected to be type INT but is type {type(level).__name__.upper()}{temp_str_debug}")
         if( not isinstance(status, str) ):          raise ValueError(f"{temp_str_prepend}param [status] expected to be type STR but is type {type(status).__name__.upper()}{temp_str_debug}")
-        if( not isinstance(texttolog, str) ):       raise ValueError(f"{temp_str_prepend}param [texttolog] expected to be type STR but is type {type(texttolog).__name__.upper()}{temp_str_debug}")
         if( not isinstance(nonewlines, bool) ):     raise ValueError(f"{temp_str_prepend}param [nonewlines] expected to be type BOOL but is type {type(nonewlines).__name__.upper()}{temp_str_debug}")
         if( not isinstance(timenow, str) ):         raise ValueError(f"{temp_str_prepend}param [timenow] expected to be type STR but is type {type(timenow).__name__.upper()}{temp_str_debug}")
         if( not isinstance(to_std, bool) ):         raise ValueError(f"{temp_str_prepend}param [to_std] expected to be type BOOL but is type {type(to_std).__name__.upper()}{temp_str_debug}")
@@ -129,17 +131,17 @@ class backend:
             #raise exception but catch immediately and let exception_handle() do it's job
             try:                    raise ValueError(f"{temp_str_prepend}parameter [to_file=True] but logfile not opened; specify log file path and call logfile_open() before using [to_file=True]{temp_str_debug}")
             except Exception as e:  backend.exception_handle(self,"logging.log()",e)
-    def checkparam_logrunning(self,caller,status,texttolog,logid,level):
+    def checkparam_logrunning(self,texttolog,caller,status,logid,level):
         """
         brief internal function check parameters on function call
         param [**] self-describing
         returns [] None
         """
         temp_str_prepend=f"extendlog: logging.logrunning(): "
-        temp_str_debug=f" (for debugging: function called with parameters: logrunning({backend.reconstr_func_param(caller=caller,status=status,texttolog=texttolog,logid=logid,level=level)})"
+        temp_str_debug=f" (for debugging: function called with parameters: logrunning({backend.reconstr_func_param(texttolog=texttolog,caller=caller,status=status,logid=logid,level=level)})"
+        if( not isinstance(texttolog, str) ):       raise ValueError(f"{temp_str_prepend}param [texttolog] expected to be type STR but is type {type(texttolog).__name__.upper()}{temp_str_debug}")
         if( not isinstance(caller, str) ):          raise ValueError(f"{temp_str_prepend}param [caller] expected to be type STR but is type {type(caller).__name__.upper()}{temp_str_debug}")
         if( not isinstance(status, str) ):          raise ValueError(f"{temp_str_prepend}param [status] expected to be type STR but is type {type(status).__name__.upper()}{temp_str_debug}")
-        if( not isinstance(texttolog, str) ):       raise ValueError(f"{temp_str_prepend}param [texttolog] expected to be type STR but is type {type(texttolog).__name__.upper()}{temp_str_debug}")
         if( not isinstance(logid, int) ):           raise ValueError(f"{temp_str_prepend}param [logid] expected to be type INT but is type {type(logid).__name__.upper()}{temp_str_debug}")
         if( not isinstance(level, int) ):           raise ValueError(f"{temp_str_prepend}param [level] expected to be type INT but is type {type(level).__name__.upper()}{temp_str_debug}")
     def checkparam_logrunningnow(self,entries,queue_reset,combine,status_prefix,nonewlines,to_std,to_file,to_514):
@@ -269,7 +271,7 @@ class templates:
     brief provides objects for internal use
     """
     class runninglog:
-        def __init__(self,timenow,caller,status,texttolog,logid,level):
+        def __init__(self,timenow,texttolog,caller,status,logid,level):
             """
             brief provides a template for an entry in the running log
             param [timenow] INT timenow of the logged event, in format of datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S.%f")
@@ -280,9 +282,9 @@ class templates:
             returns [] None
             """
             self.timenow =              timenow
+            self.texttolog =            texttolog
             self.caller =               caller
             self.status =               status
-            self.texttolog =            texttolog
             self.logid =                logid
             self.level =                level
     class dupli_buf:
@@ -311,21 +313,16 @@ class threading:
             while( not self.exitCalled ) or ( self.exitCalled and self.exitWait and self.queue_logfile.qsize()>0 ):
                 linesum = ""
                 linecount = 0
-                for i in range(self.queue_logfile.qsize()):
-                    try:
-                        linesum+=self.queue_logfile.get_nowait()
-                        linecount+=1
-                    except queue.Empty: pass #ignore
-                    except:
-                        try:    self.queue_logfile.task_done()
-                        except: pass
-                #if everything alright
-                if( self.logfile!=None ) and (linesum):
+                queuesize = self.queue_logfile.qsize()
+                for i in range(queuesize):
+                    try:                    linesum+=self.queue_logfile.get_nowait(); linecount+=1
+                    except queue.Empty:     pass; #ignore
+                    except queue.Shutdown:  pass; #ignore
+                    except:                 pass; #ignore
+                if(self.logfile!=None) and linesum:
                     self.logfile.write(linesum) #write to logfile
                     self.logfile.flush() #make sure logfile is written to
-                    for i in range(linecount): self.queue_logfile.task_done() #remove entries from queue_logfile
-                elif( self.logfile==None ): pass
-                else:                       raise RuntimeError(f"global var [self.logfile] and local var [linesum] have unexpected value or combination of values: (in order) '{self.logfile!r}', '{linesum!r}'")
+                    for i in range(linecount): self.queue_logfile.task_done() #remove entries from queue
                 time.sleep(self.thread_default_sleep_time)
             #finally, shut down:
             backend.debug_handle(self,"logging.write_logfile_thread(): while-loop exited and will begin shutdown of thread now...")
@@ -344,20 +341,17 @@ class threading:
             while (not self.exitCalled) or (self.exitCalled and self.exitWait and self.queue_stdout.qsize()>0):
                 linesum = ""
                 linecount = 0
-                for i in range(self.queue_stdout.qsize()):
-                    try:
-                        linesum = linesum+self.queue_stdout.get_nowait()+"\r\n"
-                        linecount += 1
-                    except queue.Empty: pass #ignore
-                    except:
-                        try:    self.queue_stdout.task_done()
-                        except: pass
+                queuesize = self.queue_stdout.qsize()
+                for i in range(queuesize):
+                    try:                    linesum = linesum+self.queue_stdout.get_nowait()+"\r\n"; linecount+=1
+                    except queue.Empty:     pass; #ignore
+                    except queue.Shutdown:  pass; #ignore
+                    except:                 pass; #ignore
                 try:
-                    #if everything alright
-                    if linesum:
+                    if(linesum):
                         if(linesum.endswith("\r\n")): linesum=linesum[:-2]
                         sys.stdout.write(linesum+"\r\n")
-                        for i in range(linecount): self.queue_stdout.task_done()
+                        for i in range(linecount): self.queue_stdout.task_done() #remove entries from queue
                 except Exception as e:
                     backend.exception_handle(self,"logging.write_stdout_thread()",e,f"shutting down tasks now...",to_std=True)
                     backend.shutdown_writeStdoutThread(self,is_exc=True)
