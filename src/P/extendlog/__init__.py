@@ -17,6 +17,24 @@ import                              pathlib
 #global vars
 exceptions = backend.exceptions #make it available to end user
 
+#global functions
+def loglevel_to_status(loglevel):
+    """
+    brief convert loglevel (INT) to status message (STR) compatible with Linux Kernel rules; returns "N/A" on unexpected loglevel
+    param [loglevel] INT
+    returns [status] STR
+    """
+    match(loglevel):
+        case 0: return "EMERG"
+        case 1: return "ALERT"
+        case 2: return "CRIT"
+        case 3: return "ERR"
+        case 4: return "WARN"
+        case 5: return "NOTICE"
+        case 6: return "INFO"
+        case 7: return "DEBUG"
+        case _: return "N/A"
+
 #main code
 class logging:
     """
@@ -35,6 +53,8 @@ class logging:
         self.logfile = None
         self.runninglog_buf = collections.deque()
         self.exitCalled = False
+        self.exitCalledByUser = False
+        self.is_exit_finished = threading.Event() #the user can listen to
         self.exitWait = False
         self.queue_logfile = queue.Queue()
         self.queue_stdout = queue.Queue()
@@ -49,12 +69,12 @@ class logging:
         #start threads
         self.thread_write_logfile = (threading.Thread(name = "write_logfile_thread", target=backend.threading.write_logfile_thread, args=(self,))); self.thread_write_logfile.start()
         self.thread_write_stdout = (threading.Thread(name = "write_stdout_thread", target=backend.threading.write_stdout_thread, args=(self,))); self.thread_write_stdout.start()
-    def log(self, caller="", status="", texttolog="", logid=0, serial=0, level=6, nonewlines=True, timenow=None, to_std=True, to_file=True, to_514=False):
+    def log(self, texttolog="", caller="", status="", logid=0, serial=0, level=6, nonewlines=True, timenow=None, to_std=True, to_file=True, to_514=False):
         """
         brief append a log entry to stdout or file
+        param [texttolog] STR that specifies the text to log
         param [caller] STR (max. 36 chars) that specifies the caller (any format you like, e.g. "201.10" or "myprog.myfunction.mysubfunction")
         param [status] STR (max. 18 chars) any status you like, e.g. INFO, WARNING, EXCEPTION, ...
-        param [texttolog] STR that specifies the text to log
         param [logid] INT (max. 999_999_999) optional logid of the event; e.g. use the same logid for the same exact occurences of an event; default:0
         param [serial] INT (max. 999_999_999) optional serial number of this specific log entry; max:999_999_999, default:randomly-generated if not provided
         param [level] INT (max. 9) optional loglevel as known from many linux-based systems, e.g.4; recommended:0-7, max:9, default:4
@@ -67,10 +87,10 @@ class logging:
         """
         try:
             #prepare
-            timenow =   ( datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S.%f") ) if timenow is None else timenow
+            timenow =   ( datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d_%H-%M-%S.%f") ) if timenow is None else timenow
             if(serial<=0): serial=random.randrange(999999999)
             #checks
-            backend.backend.checkparam_log(self,caller,logid,serial,level,status,texttolog,nonewlines,timenow,to_std,to_file,to_514)
+            backend.backend.checkparam_log(self,texttolog,caller,logid,serial,level,status,nonewlines,timenow,to_std,to_file,to_514)
             #compensate for malicious strings
             caller,status,level,logid,serial=backend.backend.ensure_maxvars_log( caller,status,level,logid,serial )
             texttolog = texttolog.encode(encoding='utf-8',errors='replace').decode(encoding='utf-8',errors='replace')
@@ -79,18 +99,19 @@ class logging:
             texttolog_mod = ""
             texttolog_mod_nonl = ""
             texttolog_mod += timenow                                                                                #"2000-01-01_08-00-00.012345"
-            for rangecount in range(26+1-len(timenow)): texttolog_mod += " "                                        #"2000-01-01_08-00-00.012345 "
-            texttolog_mod += (caller)                                                                               #"2000-01-01_08-00-00.012345 201.10"
-            for rangecount in range(36+1-len(caller)): texttolog_mod += " "                                         #"2000-01-01_08-00-00.012345 201.10                               "
-            texttolog_mod += str(logid)                                                                             #"2000-01-01_08-00-00.012345 201.10                               123456789"
-            for rangecount in range(9+1-len(str(logid))): texttolog_mod += " "                                      #"2000-01-01_08-00-00.012345 201.10                               123456789 "
-            texttolog_mod += str(serial)                                                                            #"2000-01-01_08-00-00.012345 201.10                               123456789 987654321"
-            for rangecount in range(9+1-len(str(serial))): texttolog_mod += " "                                     #"2000-01-01_08-00-00.012345 201.10                               123456789 987654321 "
-            texttolog_mod += str(level)                                                                             #"2000-01-01_08-00-00.012345 201.10                               123456789 987654321 4"
-            for rangecount in range(1+1-len(str(level))): texttolog_mod += " "                                      #"2000-01-01_08-00-00.012345 201.10                               123456789 987654321 4 "
-            texttolog_mod += (status.upper())                                                                       #"2000-01-01_08-00-00.012345 201.10                               123456789 987654321 4 SUCCESS"
-            for rangecount in range(18+1-len(status)): texttolog_mod += " "                                         #"2000-01-01_08-00-00.012345 201.10                               123456789 987654321 4 SUCCESS      "
-            texttolog_mod += (texttolog); texttolog_mod_nonl = texttolog_mod; texttolog_mod += ("\n")               #"2000-01-01_08-00-00.012345 201.10                               123456789 987654321 4 SUCCESS      test-string"
+            texttolog_mod += "Z"                                                                                    #"2000-01-01_08-00-00.012345Z"
+            for rangecount in range(27+1-len(timenow)): texttolog_mod += " "                                        #"2000-01-01_08-00-00.012345Z "
+            texttolog_mod += (caller)                                                                               #"2000-01-01_08-00-00.012345Z 201.10"
+            for rangecount in range(36+1-len(caller)): texttolog_mod += " "                                         #"2000-01-01_08-00-00.012345Z 201.10                               "
+            texttolog_mod += str(logid)                                                                             #"2000-01-01_08-00-00.012345Z 201.10                               123456789"
+            for rangecount in range(9+1-len(str(logid))): texttolog_mod += " "                                      #"2000-01-01_08-00-00.012345Z 201.10                               123456789 "
+            texttolog_mod += str(serial)                                                                            #"2000-01-01_08-00-00.012345Z 201.10                               123456789 987654321"
+            for rangecount in range(9+1-len(str(serial))): texttolog_mod += " "                                     #"2000-01-01_08-00-00.012345Z 201.10                               123456789 987654321 "
+            texttolog_mod += str(level)                                                                             #"2000-01-01_08-00-00.012345Z 201.10                               123456789 987654321 4"
+            for rangecount in range(1+1-len(str(level))): texttolog_mod += " "                                      #"2000-01-01_08-00-00.012345Z 201.10                               123456789 987654321 4 "
+            texttolog_mod += (status.upper())                                                                       #"2000-01-01_08-00-00.012345Z 201.10                               123456789 987654321 4 SUCCESS"
+            for rangecount in range(18+1-len(status)): texttolog_mod += " "                                         #"2000-01-01_08-00-00.012345Z 201.10                               123456789 987654321 4 SUCCESS      "
+            texttolog_mod += (texttolog); texttolog_mod_nonl = texttolog_mod; texttolog_mod += ("\n")               #"2000-01-01_08-00-00.012345Z 201.10                               123456789 987654321 4 SUCCESS      test-string"
             #stdout
             self.queue_stdout.put(texttolog_mod_nonl)
             #file
@@ -98,28 +119,28 @@ class logging:
             #syslog
             #NOT IMPLEMENTED YET
         except Exception as e: backend.backend.exception_handle(self,"logging.log()",e)
-    def logrunning(self, caller, status, texttolog, logid=0, level=4):
+    def logrunning(self, texttolog="", caller="", status="", logid=0, level=6):
         """
         brief add an entry to the running log
+        param [texttolog] STR that specifies the text to log
         param [caller] STR (max. 36 chars) that specifies the caller in any format you like, e.g. "my_func" or "201.10"
         param [status] STR (max. 18 chars) any status you like, e.g. INFO, WARNING, EXCEPTION, ...
-        param [texttolog] STR that specifies the text to log
         param [logid] INT (max. 999_999_999) optional logid of the event; e.g. use the same logid for the same occurence of an event
-        param [level] INT (max. 9) optional loglevel as known from many linux-based systems, e.g.4; recommended:0-7, max:9, default:4
+        param [level] INT (max. 9) optional loglevel as known from many linux-based systems, e.g.4; recommended:0-7, max:9, default:6
         returns [] None
         """
         try:
             #checks
-            backend.backend.checkparam_logrunning(self,caller,status,texttolog,logid,level)
+            backend.backend.checkparam_logrunning(self,texttolog,caller,status,logid,level)
             #prepare
-            timenow = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S.%f")
+            timenow = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d_%H-%M-%S.%f")
             #compensate for malicious string
             caller = caller[0:36]
             status = status[0:18]
             logid=min(logid,999_999_999)
             level=min(level,9)
             #do
-            self.runninglog_buf.append( backend.templates.runninglog(timenow,caller,status,texttolog,logid,level) )
+            self.runninglog_buf.append( backend.templates.runninglog(timenow,texttolog,caller,status,logid,level) )
         except Exception as e: backend.backend.exception_handle(self,"logging.logrunning()",e)
     def logrunning_now(self, entries=999, queue_reset=True, combine=False, status_prefix="", nonewlines=True, to_std=True, to_file=True, to_514=False):
         """
@@ -141,13 +162,13 @@ class logging:
             buf_orig_len=len(self.runninglog_buf)
             buf_mod,buf_to_remove=backend.backend.remove_dupli(self,combine,entries,buf_orig_len)
             #log
-            for i in range( len(buf_mod) ): self.log( (buf_mod[i].caller),(status_prefix+buf_mod[i].status),(buf_mod[i].texttolog),logid=(buf_mod[i].logid),level=(buf_mod[i].level),nonewlines=nonewlines,timenow=(buf_mod[i].timenow),to_std=to_std,to_file=to_file,to_514=to_514 )
+            for i in range( len(buf_mod) ): self.log( texttolog=(buf_mod[i].texttolog),caller=(buf_mod[i].caller),status=(status_prefix+buf_mod[i].status),logid=(buf_mod[i].logid),level=(buf_mod[i].level),nonewlines=nonewlines,timenow=(buf_mod[i].timenow),to_std=to_std,to_file=to_file,to_514=to_514 )
             #inform of duplicates
             buf_dupli=backend.backend.get_dupli_per_id(self,buf_to_remove)
             if( combine) and ( len(buf_dupli)>0 ):
-                for dupli in buf_dupli:                         self.log("extendlog", "INFO", f"running log: above entry with logid [{dupli.logid}] had [{dupli.num_dupli}] duplicates using the same logid, omitted from output",nonewlines=False,to_std=to_std,to_file=to_file,to_514=to_514)
-            if( buf_orig_len>entries and not queue_reset ):     self.log("extendlog", "INFO", f"running log: max. entries reached, [{buf_orig_len-entries}] stay in queue",nonewlines=False,to_std=to_std,to_file=to_file,to_514=to_514)
-            elif( buf_orig_len>entries ):                       self.log("extendlog", "INFO", f"running log: max. entries reached, [{buf_orig_len-entries}] removed from queue",nonewlines=False,to_std=to_std,to_file=to_file,to_514=to_514)
+                for dupli in buf_dupli:                         self.log(texttolog=f"running log: above entry with logid [{dupli.logid}] had [{dupli.num_dupli}] duplicates using the same logid, omitted from output",caller="extendlog",status="INFO",nonewlines=False,to_std=to_std,to_file=to_file,to_514=to_514)
+            if( buf_orig_len>entries and not queue_reset ):     self.log(texttolog=f"running log: max. entries reached, [{buf_orig_len-entries}] stay in queue",caller="extendlog",status="INFO",nonewlines=False,to_std=to_std,to_file=to_file,to_514=to_514)
+            elif( buf_orig_len>entries ):                       self.log(texttolog=f"running log: max. entries reached, [{buf_orig_len-entries}] removed from queue",caller="extendlog",status="INFO",nonewlines=False,to_std=to_std,to_file=to_file,to_514=to_514)
             #reset
             backend.backend.pop_entries(self,buf_to_remove,queue_reset,buf_orig_len)
         except Exception as e: backend.backend.exception_handle(self,"logging.logrunning_now()",e)
@@ -181,7 +202,7 @@ class logging:
             logfilepath_old =   self.logfilepath
             backend.backend.debug_handle(self,"logging.logfile_rotate(): reference to old logfile stored, will attempt to log info now...")
             #log
-            if(loginfo): self.log("extendlog", "INFO", f"logging.logfile_rotate() was called and logfile will be rotated from '{logfilepath_old}' to '{logfilepath}'",nonewlines=True,to_std=True,to_file=True,to_514=True)
+            if(loginfo): self.log(texttolog=f"logging.logfile_rotate() was called and logfile will be rotated from '{logfilepath_old}' to '{logfilepath}'",caller="extendlog",status="INFO",nonewlines=True,to_std=True,to_file=True,to_514=True)
             backend.backend.debug_handle(self,"logging.logfile_rotate(): info logged, will attempt to join logfile queue now to wait for existing buffer to log to old logfile ( backend.backend.queue_join_mind_exit() ) ...")
             if(loginfo): backend.backend.queue_join_mind_exit(self,self.queue_logfile)
             backend.backend.debug_handle(self,"logging.logfile_rotate(): join finished, will attempt to flush() old logfile now...")
@@ -196,7 +217,7 @@ class logging:
             logfile_old.close()
             backend.backend.debug_handle(self,"logging.logfile_rotate(): old logfile closed, will attempt to log info now...")
             #log
-            if(loginfo): self.log("extendlog", "INFO", f"logging.logfile_rotate() was called and logfile was rotated from '{logfilepath_old}' to '{self.logfilepath}'",nonewlines=True,to_std=True,to_file=True,to_514=True)
+            if(loginfo): self.log(texttolog=f"logging.logfile_rotate() was called and logfile was rotated from '{logfilepath_old}' to '{self.logfilepath}'",caller="extendlog",status="INFO",nonewlines=True,to_std=True,to_file=True,to_514=True)
             backend.backend.debug_handle(self,"logging.logfile_rotate(): info logged, function finished")
         except Exception as e: backend.backend.exception_handle(self,"logging.logfile_rotate()",e,to_std=True)
     def logfile_close(self, wait=True):
@@ -209,12 +230,13 @@ class logging:
             backend.backend.debug_handle(self,"logging.logfile_close() called and will attempt to join logfile queue now to wait for existing buffer to log ( backend.backend.queue_join_mind_exit() ) ...")
             if(wait):   backend.backend.queue_join_mind_exit(self,self.queue_logfile)
             backend.backend.debug_handle(self,"logging.logfile_close(): join finished, will attempt to close() logfile now ( self.logfile.close() )...")
+            self.logfile_before_close = self.logfile
+            self.logfile = None #set None BEFORE doing any modifications to the instance
             try:
-                self.logfile.close()
-                backend.backend.debug_handle(self,"logging.logfile_close(): logfile closed, will attempt to set [self.logfile=None] now...")
+                self.logfile_before_close.close()
+                backend.backend.debug_handle(self,"logging.logfile_close(): logfile closed. function finished")
             except:     pass;
-            self.logfile = None
-            backend.backend.debug_handle(self,"logging.logfile_close(): function finished")
+            del(self.logfile_before_close) #free up immediately
         except Exception as e: backend.backend.exception_handle(self,"logging.logfile_close()",e,to_std=True)
     def exit(self, wait=True):
         """
@@ -223,6 +245,7 @@ class logging:
         returns [] None
         """
         try:
+            self.exitCalledByUser=True
             backend.backend.debug_handle(self,"logging.exit() called and will attempt to close logfile now ( self.logfile_close() )...")
             #close logfile
             self.logfile_close(wait=wait)
@@ -241,4 +264,9 @@ class logging:
                 backend.backend.debug_handle(self,"logging.exit(): wait for threads finished, function finished")
             else:
                 backend.backend.debug_handle(self,"logging.exit(): vars set, function finished")
+            #empty buffers
+            self.runtime_exc_buffer=[]
+            self.runtime_exc_bufferAsStr=[]
+            #inform user
+            self.is_exit_finished.set()
         except Exception as e: backend.backend.exception_handle(self,"logging.exit()",e,to_std=True)
