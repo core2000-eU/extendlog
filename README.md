@@ -6,35 +6,24 @@ Provides capable, customizable logging features. Easy-to-use, modern, fast. IT J
 And best of all: results are constant. Logfiles look uniform.  
 **You can depend on it.**  
 
+[Supporters](#now-for-the-boring-part) and contributors are welcome any day of the week :)  
+
 > [!NOTE]
 > This project is in use by **MPSS - Multi-platform shared storage**, a brand-new way to combine, share and access storage over LAN and WAN. Run servers, workstations and clients, multiple OSs and huge numbers of devices simultaneously.  
 [Take a look here if that sounds interesting! \[core2000.com\]](https://core2000.com/software/mpss/)  
 
-[Supporters](#now-for-the-boring-part) and contributors are welcome any day of the week :)
-
 ## Fast track
-Install with `pip install extendlog`; import into your project with `import extendlog`; and refer to the [documentation](#documentation) section below to know your way around;  
-and/or download, open and run example file [`/samples/extendlog_sample1.py`](https://github.com/core2000-eU/extendlog/blob/main/samples/extendlog_sample1.py) from GitHub.  
+Install with `pip install extendlog`; import into your project with `import extendlog`; and refer to the example file [`/samples/extendlog_sample1.py`](https://github.com/core2000-eU/extendlog/blob/main/samples/extendlog_sample1.py) on GitHub.  
 
 ## Basics
 **Compatibility**  in short: any platform on Python 3+.  
-Here's a list of confirmed options:  
-
-  | Name | Version | Description |
-  |------|---------|-------------|
-  | -- |
-  | Windows 10 |      | ✅ should work   |
-  | Windows 11 | 25H2 | ✅ confirmed working  |
-  | RHEL/Rocky Linux  | 10        | ✅ confirmed working |
-  | -- |
-  | Python  | 3.14.2        | ✅ confirmed working |
-  | Python  | 3.15.0        | ✅ confirmed working |
+Confirmed working: Win10, Win11, RHEL/Rocky Linux 10.x with Python 3.14.2.
 
 **Status:** *public beta*.  
 The current functions are tested on compatible platforms. There's some features missing here and there (see below) and I'd be glad for feedback.  
 In short, I'm waiting on community response before the release of a final version - but rest assured that current releases are tested extensively.
 
-**Built** on W11 25H2 with python 3.14.2, pip 26.2.1, build 1.5.0, twine 7.0.0. Standard settings.
+**Built** on W11 25H2 with python 3.15.0, pip 26.3, build 1.5.0, twine 7.0.0. Standard settings.  
 
 ## Installation
 
@@ -49,102 +38,30 @@ In short, I'm waiting on community response before the release of a final versio
 ### Basic usage  
 Import with `import extendlog`.  
 Initialize a new instance with e.g. `logging = extendlog.logging("logfile_1.log")`, where `logging` is now your instance.  
-You must now call `logging.logfile_open()` to open the logfile for r/w access and keep it open until you exit the instance.  
+You must now call `logging.logfile_open()` to open the logfile for r/w access.  
+Now you can call all user-facing functions e.g. `logging.log(*)`, `logging.logrunning(*)`, ... .  
 
-After that, you can call all user-facing functions e.g. `logging.log(*)`, `logging.logrunning(*)`, ... .  
+### User-facing functions, exception handling, examples:  
+because everything is so neatly documented in our example file, please refer to it at [`/samples/extendlog_sample1.py`](https://github.com/core2000-eU/extendlog/blob/main/samples/extendlog_sample1.py) on GitHub.  
 
 > [!IMPORTANT]
 > Please keep the [quirks, features, todo](#quirks-features-todo) section in mind below  
 
 > [!IMPORTANT]
-> Please, account for this library's special [Exception handling (see below)](#exception-handling)  
-
-> [!NOTE]
-> For a guide and reference, you may download, open and run example file [`/samples/extendlog_sample1.py`](https://github.com/core2000-eU/extendlog/blob/main/samples/extendlog_sample1.py) from GitHub.  
-
-### User-facing functions  
-\>\>\> because everything is so neatly documented in our example file, please refer to it at [`/samples/extendlog_sample1.py`](https://github.com/core2000-eU/extendlog/blob/main/samples/extendlog_sample1.py) on GitHub.  
-All user-facing functions are documented inside.  
-
-### Exception handling
-\>\>\> because everything is so neatly documented in our example file, please refer to it at [`/samples/extendlog_sample1.py`](https://github.com/core2000-eU/extendlog/blob/main/samples/extendlog_sample1.py) on GitHub.  
-Exception handling is explicitely documented inside.  
-
-### Examples  
-> [!NOTE]
-> For a vast collection of examples and further reference, open and run example file [`/samples/extendlog_sample1.py`](https://github.com/core2000-eU/extendlog/blob/main/samples/extendlog_sample1.py) from GitHub.
-
-<br>
-
-**Import; initialize instance of library; let extendlog open the logfile for r/w access**:  
-```
-import
-import extendlog
-
-#initialize a new instance while also providing a log file path:
-logging = extendlog.logging("logfile_1.log")
-
-#we need to make the library open the logfile in the background (for writing access) and keep it open until we exit
-logging.logfile_open()
-```
-
-**simply log a single line to stdout and to file**:  
-```
-# ! you must import, initialize the library and call logfile_open() first !
-
-#log
-logging.log(caller="my_func_1", status="INFO", texttolog="log test no. 1")
-
-#you can omit the parameter names when keeping their order:
-logging.log("my_func_1", "INFO", "log test no. 1")
-
-#using all parameters
-logging.log(caller="my_func_2", status="INFO", texttolog="log test no. 2", logid=1234, serial=654321, level=6, nonewlines=True, to_std=True, to_file=True, to_514=False)
-```
-
-> [!NOTE]
-> RUNNINGLOG  
-> The runninglog feature is a highly capable feature, especially for time-senstitive and multi-thread applications. It is described in detail in the example file [`/samples/extendlog_sample1.py`](https://github.com/core2000-eU/extendlog/blob/main/samples/extendlog_sample1.py) on GitHub.
-
-**log entries to runninglog; process/output the runninglog afterwards**:  
-```
-# ! you must import, initialize the library and call logfile_open() first !
-
-#log multiple entries using runninglog (non-blocking):
-logging.logrunning(caller="my_func_5", status="INFO", texttolog="logrunning no. 5", logid=1236, level=6)
-logging.logrunning(caller="my_func_5", status="INFO", texttolog="logrunning no. 6", logid=1236, level=6)
-logging.logrunning(caller="my_func_5", status="INFO", texttolog="logrunning no. 7", logid=1236, level=6)
-logging.logrunning(caller="my_func_5", status="INFO", texttolog="logrunning no. 8", logid=1236, level=6)
-logging.logrunning(caller="my_func_5", status="CRITICAL", texttolog="logrunning no. 9", logid=1237, level=2)
-logging.logrunning(caller="my_func_5", status="CRITICAL", texttolog="logrunning no. 10", logid=1237, level=2)
-logging.logrunning(caller="my_func_5", status="CRITICAL", texttolog="logrunning no. 11", logid=1237, level=2)
-logging.logrunning(caller="my_func_5", status="CRITICAL", texttolog="logrunning no. 12", logid=1237, level=2)
-
-#process/output the entries stored in runninglog. It would make sense to call this from within a background thread (blocking):
-logging.logrunning_now(combine=True)
-```
-
-**roting the logfile (can be done anytime, anywhere after logfile_open(\*) was called)**:  
-```
-logging.logfile_rotate("logfile_2.log")
-```
-
-> [!NOTE]
-> EXCEPTION HANDLING  
-> Is described in detail in the example file [`/samples/extendlog_sample1.py`](https://github.com/core2000-eU/extendlog/blob/main/samples/extendlog_sample1.py) on GitHub.
-
-**You must exit/shutdown every instance of extendlog like this**:  
-```
-logging.exit(wait=True)
-```
+> Please, account for this library's special [Exception handling (see below)](#exception-handling)
 
 ### Quirks, features, ToDo
 **Quirks and features**:  
-- watch closely, there's nothing here  
+- each log entry in the stdout and logfile outputs feature the same exact structure and order, the same number of characters (except for the logged text of course, which is the very last object in any log entry), and the same encoding (UTF-8). This means that stdout/logfiles are machine-readable and you can trust that in future versions, the format of outputs will stay the same.
+- your instance of extendlog MUST be shutdown (by calling the exit() function on your instance)  or background threads will continue to run.
+- once exit() is called on your instance, you must throw it away. It's non-reusable.
+
 
 **ToDo**:  
 - [Issue #1:](https://github.com/core2000-eU/extendlog/issues/1) Logging to syslog server needs implementation. ( the "to_514" parameters in log() )  
-  Timeframe: Q2/2027. For now, stdout and logfile are the only options.  
+  Timeframe: Q2/2027. For now, stdout and logfile are the only options.
+- [Issue #2:](https://github.com/core2000-eU/extendlog/issues/2) Implement instance-wide settings for [to_file], [to_stdout], [to_514].  
+  Timeframe: Q2/2027. For now, you have to set these options on each call to log() and logrunning_now().  
 
 ### Source file structure (for contributors and developers):  
 ```
