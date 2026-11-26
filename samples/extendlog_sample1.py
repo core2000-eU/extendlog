@@ -15,7 +15,7 @@ import                              time
 
 #initialize a new instance while also providing a log file path:
 logging = extendlog.logging("logfile_1.log")
-#we need to make the library open the logfile in the background (for writing access) and keep it open until we exit
+#we need to make the library open the logfile in the background for r/w access:
 logging.logfile_open()
 
 
@@ -27,30 +27,31 @@ logging.logfile_open()
 
 
 #first, let's use the most simple way to produce a log entry
-#   'my_func_1'     -> the caller; name/identifier, can be any string you want; optional
-#   'INFO'          -> the staus for the entry; can be any string you want; optional
-#   'log test ...'  -> the text to log
-logging.log(caller="my_func_1", status="INFO", texttolog=f"log test no. 1; path_to_logfile is {logging.logfilepath}")
+#   'log test ...'  -> STR -> the text to log;
+#                             note that we're using an f-string here (which is optional, of course) with the {logging.logfilepath} parameter, which represents the current absolute log file path as string.
+#   'my_func_1'     -> STR -> the caller; name/identifier, can be any string you want; optional
+#   'INFO'          -> STR -> the staus for the entry; can be any string you want; optional
+logging.log(f"log test no. 1; path_to_logfile is {logging.logfilepath}", "my_func_1", "INFO")
 
 #here is a list of all parameters the log() function accepts:
-#   param [caller] STR (max. 36 chars) that specifies the caller (any format you like, e.g. "201.10" or "myprog.myfunction.mysubfunction")
-#   param [status] STR (max. 18 chars) any status you like, e.g. INFO, WARNING, EXCEPTION, ...
-#   param [texttolog] STR the text to log
-#   param [logid] INT (max. 999_999_999) optional logid of the event; e.g. use the same logid for the same exact occurences of an event; default:0
-#   param [serial] INT (max. 999_999_999) optional serial number of this specific log entry; max:999_999_999, default:randomly-generated if not provided
-#   param [level] INT (max. 9) optional loglevel as known from many linux-based systems, e.g.4; recommended:0-7, max:9, default:4
-#   param [nonewlines] BOOL optional if True, both \r \n will be removed from texttolog; default:True
-#   param [to_std] BOOL optional if True, will log to stdout (terminal); default:True
-#   param [to_file] BOOL optional if True, will log to logfile; default:True
-#   param [to_514] BOOL optional if True, will log to syslog server (often at port 514); default:False; NO FUNCTION AT THIS TIME because syslogging is not yet implemented
-logging.log(caller="my_func_2", status="INFO", texttolog="log test no. 2", logid=1234, serial=654321, level=6, nonewlines=True, to_std=True, to_file=True, to_514=False)
+#   param [texttolog] -> STR -> the text to log
+#   param [caller] -> STR -> (max. 36 chars) that specifies the caller (any format you like, e.g. "201.10" or "myprog.myfunction.mysubfunction")
+#   param [status] -> STR -> (max. 18 chars) any status you like, e.g. INFO, WARNING, EXCEPTION, ...
+#   param [logid] -> INT -> (max. 999_999_999) optional logid of the event; e.g. use the same logid for the same exact occurences of an event; default:0
+#   param [serial] -> INT -> (max. 999_999_999) optional serial number of this specific log entry; max:999_999_999, default:randomly-generated if not provided
+#   param [level] -> INT -> (max. 9) optional loglevel as known from many linux-based systems, e.g.4; recommended:0-7, max:9, default:6
+#   param [nonewlines] -> BOOL -> optional if True, both \r \n will be removed from texttolog; default:True
+#   param [to_std] -> BOOL -> optional if True, will log to stdout (terminal); default:True
+#   param [to_file] -> BOOL -> optional if True, will log to logfile; default:True
+#   param [to_514] -> BOOL -> optional if True, will log to syslog server (often at port 514); default:False; NO FUNCTION AT THIS TIME because syslogging is not yet implemented
+logging.log("log test no. 2", "my_func_2", "INFO", logid=1234, serial=654321, level=6, nonewlines=True, to_std=True, to_file=True, to_514=False)
 
 #see what happens when we log an invalid code point that is not compatible with UTF-8:
 #-> does not raise an exception but replaces the code point with '?'
-logging.log(caller="my_func_3", status="", texttolog="log test no. 3; invalid code point: \ud800")
+logging.log("log test no. 3; invalid code point: \ud800", caller="my_func_3", status="")
 
 #log separation chars
-logging.log("", "", f"--------------------------------")
+logging.log(f"--------------------------------")
 
 #info: calling log() blocks until all content written.
 
@@ -68,21 +69,21 @@ logging.log("", "", f"--------------------------------")
 #calling logrunning_now() processes/outputs the entries stored in buffer; blocking; i.e. call this once every second from a background thread at runtime.
 
 #appending entries to the buffer; notice 2 different values for [logid]:
-logging.logrunning(caller="my_func_5", status="INFO", texttolog="logrunning no. 5", logid=1236, level=6)
-logging.logrunning(caller="my_func_5", status="INFO", texttolog="logrunning no. 6", logid=1236, level=6)
-logging.logrunning(caller="my_func_5", status="INFO", texttolog="logrunning no. 7", logid=1236, level=6)
-logging.logrunning(caller="my_func_5", status="INFO", texttolog="logrunning no. 8", logid=1236, level=6)
-logging.logrunning(caller="my_func_5", status="CRITICAL", texttolog="logrunning no. 9", logid=1237, level=2)
-logging.logrunning(caller="my_func_5", status="CRITICAL", texttolog="logrunning no. 10", logid=1237, level=2)
-logging.logrunning(caller="my_func_5", status="CRITICAL", texttolog="logrunning no. 11", logid=1237, level=2)
-logging.logrunning(caller="my_func_5", status="CRITICAL", texttolog="logrunning no. 12", logid=1237, level=2)
+logging.logrunning("logrunning no. 5", caller="my_func_5", status="INFO", logid=1236, level=6)
+logging.logrunning("logrunning no. 6", caller="my_func_5", status="INFO", logid=1236, level=6)
+logging.logrunning("logrunning no. 7", caller="my_func_5", status="INFO", logid=1236, level=6)
+logging.logrunning("logrunning no. 8", caller="my_func_5", status="INFO", logid=1236, level=6)
+logging.logrunning("logrunning no. 9", caller="my_func_5", status="CRITICAL", logid=1237, level=2)
+logging.logrunning("logrunning no. 10", caller="my_func_5", status="CRITICAL", logid=1237, level=2)
+logging.logrunning("logrunning no. 11", caller="my_func_5", status="CRITICAL", logid=1237, level=2)
+logging.logrunning("logrunning no. 12", caller="my_func_5", status="CRITICAL", logid=1237, level=2)
 
 #logrunning() supports these parameters:
-#   param [caller] STR (max. 36 chars) that specifies the caller in any format you like, e.g. "my_func" or "201.10"
-#   param [status] STR (max. 18 chars) any status you like, e.g. INFO, WARNING, EXCEPTION, ...
-#   param [texttolog] STR the text to log
-#   param [logid] INT (max. 999_999_999) optional logid of the event; e.g. use the same logid for the same occurence of an event
-#   param [level] INT (max. 9) optional loglevel as known from many linux-based systems, e.g.4; recommended:0-7, max:9, default:4
+#   param [texttolog] -> STR -> the text to log
+#   param [caller] -> STR -> (max. 36 chars) that specifies the caller in any format you like, e.g. "my_func" or "201.10"
+#   param [status] -> STR -> (max. 18 chars) any status you like, e.g. INFO, WARNING, EXCEPTION, ...
+#   param [logid] -> INT -> (max. 999_999_999) optional logid of the event; e.g. use the same logid for the same occurence of an event
+#   param [level] -> INT -> (max. 9) optional loglevel as known from many linux-based systems, e.g.4; recommended:0-7, max:9, default:6
 
 #Our entries are now stored in a buffer.
 
@@ -90,21 +91,21 @@ logging.logrunning(caller="my_func_5", status="CRITICAL", texttolog="logrunning 
 #Use the [combine] parameter to clean up the final output -> this will combine all entries using the same [logid] into one.
 
 #logrunning_now() supports these parameters:
-#   param [entries] INT that specifies the max. number of entries to log, default:999
-#   param [queue_reset] BOOL if True, resets queue after this call, e.g. if more than 999 entries are in queue, they will also be removed without being logged; default:True
-#   param [combine] BOOL if True, duplicates using same logid are logged only once; default:False
-#   param [status_prefix] STR prefix before status, e.g."STAT_", default:""
-#   param [nonewlines] BOOL optional if True, both \r \n will be removed from texttolog; default:True
-#   param [to_std] BOOL optional if True, will log to stdout (terminal); default:True
-#   param [to_file] BOOL optional if True, will log to logfile; default:True
-#   param [to_514] BOOL optional if True, will log to syslog server (often at port 514); default:False; NO FUNCTION AT THIS TIME because syslogging is not implemented yet
+#   param [entries] -> INT -> that specifies the max. number of entries to log, default:999
+#   param [queue_reset] -> BOOL -> if True, resets queue after this call, e.g. if more than 999 entries are in queue, they will also be removed without being logged; default:True
+#   param [combine] -> BOOL -> if True, duplicates using same logid are logged only once; default:False
+#   param [status_prefix] -> STR -> prefix before status, e.g."STAT_", default:""
+#   param [nonewlines] -> BOOL -> optional if True, both \r \n will be removed from texttolog; default:True
+#   param [to_std] -> BOOL -> optional if True, will log to stdout (terminal); default:True
+#   param [to_file] -> BOOL -> optional if True, will log to logfile; default:True
+#   param [to_514] -> BOOL -> optional if True, will log to syslog server (often at port 514); default:False; NO FUNCTION AT THIS TIME because syslogging is not implemented yet
 logging.logrunning_now(combine=True)
 
 #Because we set [combine]=True, the output will now contain two entries: one for logid=1236, and one for logid=1237.
 #extendlog will use the first entry when combining multiple entries.
 
 #log separation chars
-logging.log("", "", f"--------------------------------")
+logging.log(f"--------------------------------")
 
 
 
@@ -125,7 +126,7 @@ logging.logfile_rotate("logfile_2.log")
 #   param [loginfo] BOOL if True, log an info that the logfile was rotated; default:True
 
 #log separation chars
-logging.log("", "", f"--------------------------------")
+logging.log(f"--------------------------------")
 
 
 
@@ -192,12 +193,35 @@ except extendlog.exceptions.RuntimeExceptionsExceeded as e:
 
 
 ## 
+## THER'S MORE!
+## 
+
+#function to auto-convert log level (INT) to a generic log status message (STR):
+# -> e.g. int(7) -> "DEBUG"
+# -> e.g. int(5) -> "NOTICE"
+print( "convert some  log level (INT) to a generic log status message (STR):" )
+print( extendlog.loglevel_to_status(7) ) #-> "DEBUG"
+print( extendlog.loglevel_to_status(5) ) #-> "NOTICE"
+
+
+
+## 
 ## EXITING / SHUTTING DOWN
 ## 
 
 
 
-#You MUST exit the library, or else extendlog's background thread will BLOCK indefinitely
-#exit() supports these parameters:
+#You MUST exit the library, or extendlog's background thread will BLOCK indefinitely
+#after calling exit(), the instance of extendlog must be thrown away and NOT reused. It won't work.
 #   param [wait] BOOL True:wait for all entries to be written; False:exit immediately; default:True
 logging.exit(wait=True)
+
+#you may now wait for the instance to finish the shutdown precedure:
+logging.is_exit_finished.wait() #-> is_exit_finished is a simple threading.Event() you can wait() on
+
+#you can also, at any time, look up whether you already called exit() (this will return a BOOL):
+print( "did I already call exit() on my instance?" )
+print( logging.exitCalledByUser ) #-> TRUE, because we alrady called exit() above
+
+#throw away the instance explicitally, do NOT reuse it
+del(logging)
